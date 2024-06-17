@@ -1,0 +1,52 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sharokos Soundscapes</title>
+	<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div id="screen">
+	<div class="scene" id="scene">
+		<div class="elevator" id="elevator" ></div>
+		<div class="floor" id="floor"></div>
+	</div>
+	<div class="buttons">
+			<button onclick="createInternalRequest(0)">P</button>
+			<button onclick="createInternalRequest(1)">1</button>
+			<button onclick="createInternalRequest(2)">2</button>
+			<button onclick="createInternalRequest(3)">3</button>
+			<button onclick="createInternalRequest(4)">4</button>
+			<button onclick="createInternalRequest(5)">5</button>
+			<select id="numberDropdown">
+			  <option value="0">P</option>
+			  <option value="1">1</option>
+			  <option value="2">2</option>
+			  <option value="3">3</option>
+			  <option value="4">4</option>
+			  <option value="5">5</option>
+			</select>
+			<button onclick="createExternalRequest('UP')">UP</button>
+			<button onclick="createExternalRequest('DOWN')">DOWN</button>
+			<button onclick="displayRequestCalls()">Call Queue</button>
+			<button onclick="displayElevatorState()">Elevator State</button>
+		</div>
+</div>
+
+<script src="Elevator.js"> </script>
+<script src="Queue.js"> </script>
+<script src="Request.js"> </script>
+<script src="script.js"> </script>
+
+
+
+
+
+</body>
+</html>

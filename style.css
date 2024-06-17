@@ -1,0 +1,26 @@
+.scene{
+	border: solid 3px;
+	
+}
+
+.floor{
+	height: 2px;
+	border: solid 1px;
+	width: 100%;
+}
+#screen{
+	display: flex;
+    width: 98vw;
+    height: 98vh;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+	
+}
+.elevator{
+	align-self: center;
+    border: solid 1px;
+	position: relative;
+	/*transition: bottom 1s ease;  Add transition for smooth animation */
+}
+
