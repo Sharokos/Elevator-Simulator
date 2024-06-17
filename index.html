@@ -13,9 +13,9 @@
 <body>
 
 <div id="screen">
+
 	<div class="scene" id="scene">
-		<div class="elevator" id="elevator" ></div>
-		<div class="floor" id="floor"></div>
+
 	</div>
 	<div class="buttons">
 			<button onclick="createInternalRequest(0)">P</button>
@@ -36,12 +36,20 @@
 			<button onclick="createExternalRequest('DOWN')">DOWN</button>
 			<button onclick="displayRequestCalls()">Call Queue</button>
 			<button onclick="displayElevatorState()">Elevator State</button>
+			<button onclick="moveToElevator()">Move entity</button>
+			<button onclick="displayEntity()">Entity</button>
 		</div>
 </div>
-
-<script src="Elevator.js"> </script>
+<script src="Randomness.js"> </script>
+<script src="Object.js"> </script>
+<script src="Entity.js"> </script>
+<script src="DrawingProperties.js"> </script>
 <script src="Queue.js"> </script>
 <script src="Request.js"> </script>
+<script src="Elevator.js"> </script>
+<script src="Floor.js"> </script>
+<script src="SizeCalculator.js"> </script>
+<script src="InitializeScene.js"> </script>
 <script src="script.js"> </script>
 
 

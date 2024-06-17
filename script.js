@@ -1,6 +1,33 @@
+const sizer = new SizeCalculator();
+const rand = new Randomness();
 
-const thisElevator = new Elevator(10,0,false,false,"UP", 0);
-var elevator = document.getElementById('elevator');
+var numberOfFloors = rand.getRandomInt(4, 8);
+const thisElevator = new Elevator(numberOfFloors,0,false,false,"UP", 0);
+const floors = Floor.generateFloors(numberOfFloors);
+const entity = Entity.generateEntity(rand,0)
+
+function displayFloors(){
+for (floor of floors){
+    console.log(floor.display())
+}
+}
+
+
+
+function moveToElevator(){
+    destination = parseInt(elevator.style.left.slice(0, 3));
+    entity.moveToElevator(destination);
+
+
+}
+
+function displayEntity(){
+    entity.displayPosition()
+}
+const initializer = new InitializeScene(sizer, rand);
+
+
+
 var durationPerFloor = 1000;
 var callQueue = new Queue();
 let intervalId;
@@ -8,89 +35,61 @@ let intervalId;
 
 const canvas = document.getElementById('scene');
 
-function addMeasurementUnit(parameter, unit){
-	return parameter + unit
+
+function scrollToBottom(elementId) {
+    var element = document.getElementById(elementId);
+    element.scrollTop = element.scrollHeight - element.clientHeight;
 }
+
 
 function resizeScene() {
-	dimensionsArray = getWindowDimensions()
-	// 0 index = width, 1 index = height
-	width = dimensionsArray[0]
-	pxWidth = addMeasurementUnit(width, "px")
-	height = dimensionsArray[1]
-	pxHeight = addMeasurementUnit(height, "px")
-	resizeFrame(pxWidth, pxHeight)
-	calculateSizes(width, height)
-	const line = document.getElementById('floor')
-	line.style.bottom = "100px"
-	
-}
 
-function getWindowDimensions(){
-	const aspectRatio = 16 / 9;
-	
-	const width = document.documentElement.clientWidth - 50
-	const height = document.documentElement.clientHeight - 50	
-	
-	var returnWidth = width;
-	var returnHeight = height;
-	if (width / height < aspectRatio) {
-		returnHeight = width / aspectRatio
-	} else {
-		returnWidth = height * aspectRatio 		
-	}	
-	return [returnWidth, returnHeight]
-}
-function resizeFrame(pxWidth, pxHeight) {
-		canvas.style.width = pxWidth;		
-		canvas.style.height = pxHeight;
+	sizer.resizeFrame(canvas);
+	sizer.resizeElevator();
+	sizer.resizeFloors(floors);
+	for (var floor of floors){
+	    sizer.redrawObjects(floor.objects)
+	}
 }
 
 
-function calculateSizes(width, height) {
-	elevatorWidth = width / 15
-	ratio = 1.5
-	elevatorHeight = elevatorWidth * ratio
-	elevatorWidthPx = addMeasurementUnit(elevatorWidth, "px")
-	elevatorHeightPx = addMeasurementUnit(elevatorHeight, "px")
-	bottomLevel = height - elevatorHeight
-	bottomLevel = addMeasurementUnit(-bottomLevel, "px")
-	elevator.style.width = elevatorWidthPx
-	elevator.style.height = elevatorHeightPx
-	elevator.style.bottom = bottomLevel
-}
+
 
 
 window.addEventListener('resize', resizeScene);
-resizeScene(); // Initial call
+initializer.init(floors,entity); // Initial call
+scrollToBottom('scene');
+var elevator = document.getElementById('elevator');
+
 function moveElevator(direction) {
-	
+
 	if(thisElevator.getFloor() == thisElevator.getNextFloor()) {
-		console.log("Floor reached. Will stop")
+		console.log(`Floor ${thisElevator.getFloor()} reached. Will stop`)
 		callQueue.dequeue();
 		clearInterval(intervalId);
-		
+
 		return;
-		}		
+		}
 	if (!thisElevator.isMoving){
-		console.log("Is not moving. Will move with direction = " + direction)
+		//console.log("Is not moving. Will move with direction = " + direction)
 		thisElevator.isMoving = true;
+
 		var startPosition = parseInt(elevator.style.bottom);
 		var currFloor = thisElevator.getFloor();
-		
+
 		var startTime = null;
-		
-		var distance = 100;
+
+		var distance = sizer.calculateFloorHeight();
 		var duration = durationPerFloor;
-		
-		
+
+
 
 		function animateUp(timestamp) {
 			if (!startTime) startTime = timestamp;
-			
+
 			var progress = timestamp - startTime;
 			var elapsedTime = Math.min(progress, duration);
-			var newPosition = startPosition + (distance / duration) * elapsedTime; 
+			var newPosition = startPosition + (distance / duration) * elapsedTime;
 			elevator.style.bottom = newPosition + 'px';
 
 			if (progress < duration) {
@@ -100,16 +99,16 @@ function moveElevator(direction) {
 				thisElevator.isMoving = false;
 				thisElevator.moveToFloor(currFloor + 1);
 			}
-		}    
+		}
 		function animateDown(timestamp) {
 			if (!startTime) startTime = timestamp;
-			
+
 			var progress = timestamp - startTime;
-			var elapsedTime = Math.min(progress, duration); 
-			var newPosition = startPosition - (distance / duration) * elapsedTime; 
+			var elapsedTime = Math.min(progress, duration);
+			var newPosition = startPosition - (distance / duration) * elapsedTime;
 			elevator.style.bottom = newPosition + 'px';
 
-			if (progress < duration) { 
+			if (progress < duration) {
 				requestAnimationFrame(animateDown);
 			}
 			else{
@@ -117,14 +116,17 @@ function moveElevator(direction) {
 				thisElevator.moveToFloor(currFloor - 1);
 			}
 		}
-		
-		
+
+
 		if (direction == "UP"){
-			console.log("Will move up");
+			//console.log("Will move up");
 			requestAnimationFrame(animateUp);
+
 		} else{
-			console.log("Will move down.")
+			//console.log("Will move down.")
 			requestAnimationFrame(animateDown);
+
+
 		}
 	}
 }
@@ -141,17 +143,20 @@ function updateNextFloor(){
 	} else {
 		nextFloor = thisElevator.getFloor();
 		direction = "UNKNOWN";
-		
+
 	}
 	thisElevator.setNextFloor(nextFloor);
-	thisElevator.setDirection(direction);	
+	thisElevator.setDirection(direction);
 }
+
+
 function initialize(){
-	updateNextFloor();
+
 	if(!callQueue.isEmpty()){
-		console.log(callQueue.size())
+		//console.log(callQueue.size())
+		updateNextFloor();
 		if(!thisElevator.isMoving){
-			console.log("Started with direction " + thisElevator.getDirection())
+			//console.log("Started with direction " + thisElevator.getDirection())
 			startElevator(thisElevator.getDirection());
 		}
 	}
@@ -171,10 +176,22 @@ function test(){
 	console.log(req.direction);
 	callQueue.findIndexOfElement(req);
 }
-function createExternalRequest(direction){
+function createExternalRequest(wantedDirection){
 	const dropdown = document.getElementById("numberDropdown");
 	var floor = parseInt(dropdown.value);
-	var eReq = new Request(0, floor, direction);
+	var currFloor = thisElevator.getFloor();
+	var nextFloor = thisElevator.getNextFloor();
+	var direction = "UP";
+	if (floor < currFloor){
+	    direction = "DOWN";
+	}
+	if (floor < nextFloor){
+	    direction = "DOWN";
+	}
+	else {
+	    direction = "UP";
+	}
+	var eReq = new Request(0, floor, direction,wantedDirection);
 	if (!callQueue.updateCallQueue(thisElevator.getFloor(), thisElevator.getDirection(), eReq)){
 		callQueue.enqueue(eReq);
 	}
@@ -183,11 +200,18 @@ function createExternalRequest(direction){
 
 function createInternalRequest(destination){
 	var currFloor = thisElevator.getFloor();
+	var nextFloor = thisElevator.getNextFloor();
+
 	var direction = "UP";
 	if (destination < currFloor){
 		direction = "DOWN";
 	}
-	var iReq = new Request(currFloor, destination, direction);
+	if (currFloor == destination){
+	    if (destination < nextFloor){
+	    direction = "DOWN";
+	    }
+	}
+	var iReq = new Request(currFloor, destination, direction, direction);
 	if (!callQueue.updateCallQueue(thisElevator.getFloor(), thisElevator.getDirection(), iReq)){
 		callQueue.enqueue(iReq);
 	}

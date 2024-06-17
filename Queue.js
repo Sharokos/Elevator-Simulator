@@ -27,10 +27,25 @@ class Queue {
   updateCallQueue(currentFloor, movingDirection, newCall){  
 
 	var updated = false;
-	if(this.size() > 1){
+
+	if(this.size() >= 1){
+//	    console.log("New call destination: " + newCall.destinationFloor)
+//        	console.log("Current Floor: " + currentFloor)
+//        	console.log("Old priority call destination: " + this.items[0].destinationFloor)
+        if ((newCall.destinationFloor > currentFloor && newCall.destinationFloor < this.items[0].destinationFloor)){
+            console.log("Condition true")
+            console.log("NewCall direction:")
+            console.log(newCall.direction)
+            console.log("Wanted:")
+            console.log(newCall.wantedDirection)
+            console.log("Moving:")
+            console.log(movingDirection)
+
+        }
 		if ((newCall.destinationFloor > currentFloor && newCall.destinationFloor < this.items[0].destinationFloor)||
 		(newCall.destinationFloor < currentFloor && newCall.destinationFloor > this.items[0].destinationFloor)){
-		  if (newCall.direction == movingDirection){
+		  if (newCall.direction == movingDirection || newCall.wantedDirection == movingDirection){
+		    console.log("Updating queue")
 			this.items.splice(0,0,newCall);  
 			updated = true;
 		  }

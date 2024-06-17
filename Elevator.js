@@ -10,6 +10,8 @@ class Elevator {
   }
 	
 
+
+
 	getFloor(){
 		return this.currentFloor;
 	}	
@@ -30,9 +32,11 @@ class Elevator {
 	}
 	moveToFloor(floor) {
 		
-		console.log(`Moving from ${this.currentFloor} to ${floor}!`);
+		//console.log(`Moving from ${this.currentFloor} to ${floor}!`);
 		this.setFloor(floor);
   }
+
+
 }
 
 

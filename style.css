@@ -1,12 +1,30 @@
 .scene{
 	border: solid 3px;
-	
+	    overflow-y: auto;
+        overflow-x: hidden;
+	position: relative;
 }
 
 .floor{
-	height: 2px;
+
 	border: solid 1px;
 	width: 100%;
+	position: absolute;
+
+}
+.objectVisual{
+    position:absolute;
+    border: solid 1px;
+
+}
+
+.entityVisual{
+ position:absolute;
+    border: solid 1px;
+}
+
+.floorContainer{
+    position:relative;
 }
 #screen{
 	display: flex;
@@ -20,7 +38,7 @@
 .elevator{
 	align-self: center;
     border: solid 1px;
-	position: relative;
+	position: absolute;
 	/*transition: bottom 1s ease;  Add transition for smooth animation */
 }
 
