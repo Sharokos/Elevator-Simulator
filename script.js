@@ -4,7 +4,9 @@ const rand = new Randomness();
 var numberOfFloors = rand.getRandomInt(4, 8);
 const thisElevator = new Elevator(numberOfFloors,0,false,false,"UP", 0);
 const floors = Floor.generateFloors(numberOfFloors);
-const entity = Entity.generateEntity(rand,0)
+var entities = []
+
+
 
 function displayFloors(){
 for (floor of floors){
@@ -13,17 +15,37 @@ for (floor of floors){
 }
 
 
-
 function moveToElevator(){
-    destination = parseInt(elevator.style.left.slice(0, 3));
-    entity.moveToElevator(destination);
-
+    moveToElevator1()
 
 }
-
-function displayEntity(){
-    entity.displayPosition()
+async function moveToElevator1(){
+    destination = parseInt(elevator.style.left) + 100;
+    await entities[0].moveTo(destination, false);
+    await entities[0].callElevator();
+    await entities[0].moveTo(destination - 100, true);
+    await entities[0].makeElevatorRequest();
+    await entities[0].moveTo(2000, false);
 }
+
+async function moveToElevator2(){
+    destination = parseInt(elevator.style.left) + 100;
+    await entity2.moveTo(destination);
+    await entity2.callElevator();
+    await entity2.moveTo(destination - 100);
+    await entity2.makeElevatorRequest();
+    await entity2.moveTo(2000);
+}
+
+
+function displayEntities(){
+    for (var ent of entities){
+        ent.displayPosition();
+    }
+}
+
+
+
 const initializer = new InitializeScene(sizer, rand);
 
 
@@ -47,9 +69,9 @@ function resizeScene() {
 	sizer.resizeFrame(canvas);
 	sizer.resizeElevator();
 	sizer.resizeFloors(floors);
-	for (var floor of floors){
-	    sizer.redrawObjects(floor.objects)
-	}
+//	for (var floor of floors){
+//	    sizer.redrawObjects(floor.objects)
+//	}
 }
 
 
@@ -57,7 +79,8 @@ function resizeScene() {
 
 
 window.addEventListener('resize', resizeScene);
-initializer.init(floors,entity); // Initial call
+
+initializer.init(floors); // Initial call
 scrollToBottom('scene');
 var elevator = document.getElementById('elevator');
 
@@ -149,7 +172,35 @@ function updateNextFloor(){
 	thisElevator.setDirection(direction);
 }
 
+function checkIfEntitiesAreWaiting(enties){
+    for (var e in enties){
+        if (e.state=="WAITING"){
+            return true;
+        }
+    }
+    return false;
+}
 
+function checkFloorEntities(){
+    var enties = Entity.getEntitiesForFloor(thisElevator.currentFloor);
+
+    for (var a of enties){
+        a.displayPosition();
+    }
+
+}
+
+function spawnEntity(){
+    const dropdown = document.getElementById("numberDropdown");
+    var floorNumber = parseInt(dropdown.value);
+    var desire = rand.getRandomInt(0, 4);
+    const entity = Entity.generateEntity(rand,floorNumber,desire)
+    entity.drawEntity("floor" + floorNumber)
+    entities.push(entity);
+
+}
+
+// DE AICI SE POATE JONGLA CU DECIZIA DE PLECARE A LIFTULUI - poti adauga oricate functii pe care sa le verifici inainte sa plece
 function initialize(){
 
 	if(!callQueue.isEmpty()){
@@ -170,28 +221,21 @@ function displayElevatorState(){
 	console.log(`Is elevator moving: ${thisElevator.isMoving}` )
 }
 
-function test(){
-	
-	var req = callQueue.elementAt(3);
-	console.log(req.direction);
-	callQueue.findIndexOfElement(req);
-}
-function createExternalRequest(wantedDirection){
-	const dropdown = document.getElementById("numberDropdown");
-	var floor = parseInt(dropdown.value);
+
+function createExternalRequest(wantedDirection, callFloor){
 	var currFloor = thisElevator.getFloor();
 	var nextFloor = thisElevator.getNextFloor();
 	var direction = "UP";
-	if (floor < currFloor){
+	if (callFloor < currFloor){
 	    direction = "DOWN";
 	}
-	if (floor < nextFloor){
+	if (callFloor < nextFloor){
 	    direction = "DOWN";
 	}
 	else {
 	    direction = "UP";
 	}
-	var eReq = new Request(0, floor, direction,wantedDirection);
+	var eReq = new Request(callFloor, callFloor, direction,wantedDirection);
 	if (!callQueue.updateCallQueue(thisElevator.getFloor(), thisElevator.getDirection(), eReq)){
 		callQueue.enqueue(eReq);
 	}

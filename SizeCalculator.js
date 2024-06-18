@@ -119,5 +119,18 @@ class SizeCalculator {
 
     visualObject.style.left = objectLeftPx
 
+
+
+
   }
+
+  getAbsoluteBot(visualId) {
+      const rect = document.getElementById(visualId).getBoundingClientRect();
+      return rect.bottom;
+  }
+
+  getAbsoluteLeft(visualId) {
+        const rect = document.getElementById(visualId).getBoundingClientRect();
+        return rect.left;
+    }
 }

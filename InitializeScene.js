@@ -24,21 +24,7 @@ class InitializeScene {
     }
 
   }
-  createEntity(entity, floor){
-    const objectVisual = document.createElement('div');
-    objectVisual.setAttribute('class', 'entityVisual');
-    objectVisual.setAttribute('id', 'entityVisual');
 
-    entity.htmlId = "entityVisual";
-    objectVisual.style.height = sizer.calculateObjectSize(entity)[1] + "px";
-    objectVisual.style.width = sizer.calculateObjectSize(entity)[0] + "px";
-    objectVisual.style.left = sizer.calculateObjectPosition(entity) + "px";
-    objectVisual.style.bottom = "0px";
-    floor.appendChild(objectVisual);
-
-
-
-  }
 
 
   createFrame(){
@@ -47,7 +33,7 @@ class InitializeScene {
     frame.style.height = this.sizer.getPxHeight();
   }
 
-  createFloors(floors, entity){
+  createFloors(floors){
     const frame = document.getElementById('scene')
     var numberOfFloors = floors.length;
     var floorHeight = sizer.calculateFloorHeight();
@@ -73,9 +59,7 @@ class InitializeScene {
       floors[i].bottomLevel = bottomLevel;
       floorContainer.appendChild(floor);
       //this.createObjects(floors[i].objects, floor);
-      if (i==0){
-        this.createEntity(entity, floor);
-      }
+
 
     }
 
@@ -103,9 +87,9 @@ class InitializeScene {
   }
 
 
-  init(floors,entity){
+  init(floors){
     this.createFrame();
-    this.createFloors(floors,entity);
+    this.createFloors(floors);
     this.createElevator()
   }
 
