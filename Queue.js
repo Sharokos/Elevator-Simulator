@@ -1,6 +1,8 @@
 class Queue {
   constructor() {
     this.items = [];
+    this.updating = false;
+    this.oldSize = 0;
   }
 
   // Add element to the queue
@@ -16,6 +18,25 @@ class Queue {
     return this.items.shift();
   }
 
+  removeItem(item){
+    if (this.isEmpty()) {
+          return "Underflow";
+    }
+    if (this.checkSize()){
+        const index = this.findIndexOfElement(item);
+//        console.log("BEFORE")
+//
+//        console.log(this.printQueue());
+        this.items.splice(index, 1);
+//        console.log(index);
+//        console.log("AFTER")
+//        console.log(this.printQueue());
+    }
+    else{
+//        console.log("Can't remove because updating.")
+    }
+  }
+
   // Return the first element from the queue without removing it
   front() {
     if (this.isEmpty()) {
@@ -25,7 +46,7 @@ class Queue {
   }
 
   updateCallQueue(currentFloor, movingDirection, newCall){  
-
+    this.updating = false;
 	var updated = false;
 //    console.log("Checking for element:" + newCall.id)
 //    console.log("Destination:" + newCall.destinationFloor)
@@ -48,22 +69,32 @@ class Queue {
 		if ((newCall.destinationFloor > currentFloor && newCall.destinationFloor < this.items[0].destinationFloor)||
 		(newCall.destinationFloor < currentFloor && newCall.destinationFloor > this.items[0].destinationFloor)){
 		  if (newCall.direction == movingDirection || newCall.wantedDirection == movingDirection){
-		    console.log("Updating queue")
+//		    console.log("Updating queue")
 			this.items.splice(0,0,newCall);  
 			updated = true;
+			this.updating = true;
+
 		  }
 		}
 		  else if(newCall.type == "internal"){
-		    console.log("Updating queue")
+//		    console.log("Updating queue")
             this.items.splice(0,0,newCall);
             updated = true;
+            this.updating = true;
 		}
 
 	}
 		  
 	return updated; 
   }
-	  
+  checkSize(){
+    if (this.oldSize != this.size()){
+        this.oldSize = this.size();
+        return false;
+
+    }
+    return true;
+  }
   // Check if the queue is empty
   isEmpty() {
     return this.items.length === 0;
@@ -89,6 +120,7 @@ class Queue {
       str += "Call#" + i + " " + this.items[i].id + " " + this.items[i].requestFloor + " " 
 	  + this.items[i].destinationFloor 
 	  + " " + this.items[i].direction
+	  + " CALLER " + this.items[i].callerId
 	  + " " + this.items[i].type + "\n";
     }
     return str;
@@ -100,9 +132,9 @@ class Queue {
 	  
 	for (let i = 0; i< this.size(); i++){
 		
-			console.log(this.items[i].id);
+
 			if (element.id == this.items[i].id){
-				console.log("Found");
+
 				return i;
 				
 			}

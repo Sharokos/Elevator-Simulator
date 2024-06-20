@@ -7,6 +7,7 @@ class Entity {
     this.drawing = drawing;
     this.htmlId = "entity" + Entity.nextId++;
     this.currentFloor = currentFloor;
+    this.spawnFloor = currentFloor;
     this.direction = direction;
     this.desiredFloor = desiredFloor;
     this.state = "IDLE";
@@ -32,10 +33,10 @@ class Entity {
 
   isElevatorHere(){
 
-    return (thisElevator.currentFloor == this.currentFloor) && (this.state == "WAITING") && (!this.travelComplete)  ? true : false;
+    return (thisElevator.currentFloor == this.currentFloor) && (this.state == "WAITING") ? true : false;
   }
   isEntityArrived(){
-    return (this.currentFloor == this.desiredFloor) && (!thisElevator.isMoving) ? true : false;
+    return (this.currentFloor == this.desiredFloor) && (!thisElevator.isMoving) && (this.spawnFloor != this.desiredFloor) && (this.state != "OUTSIDE ELEVATOR") ? true : false;
   }
   updateCurrentFloor(){
 
@@ -56,32 +57,37 @@ class Entity {
   }
 
   watcher(){
-    this.isElevatorHere() ? this.state = "GETTING IN" : this.state += "";
-    this.isEntityArrived() ? this.state = "GETTING OUT" : this.state += "";
-    this.stateWatcher();
+    if (!this.travelComplete){
+        this.isElevatorHere() ? this.state = "GETTING IN" : this.state += "";
+        this.isEntityArrived() ? this.state = "GETTING OUT" : this.state += "";
+    }
+    //this.stateWatcher();
     this.updateCurrentFloor();
   }
 
-  setInsideState(getInside){
-    if (getInside){
-        this.state = "INSIDE ELEVATOR";
-        this.isInside = true;
+  stateDecider(action, self){
+
+    if (action == "GET IN"){
+
+        self.isInside = true;
+        self.state = "INSIDE ELEVATOR";
+        return;
     }
-    else{
-        this.state = "IDLE";
+    if (action == "GET OUT"){
+        self.isInside = false;
+        self.state = "OUTSIDE ELEVATOR";
+        return;
     }
-}
-  setOutsideState(getOutside){
-    if (getOutside){
-            this.state = "OUTSIDE ELEVATOR";
-            this.isInside = false;
-        }
-        else{
-            this.state = "IDLE";
-        }
+    if (action =="LEAVE SCENE"){
+        self.state = "DONE"
+        return;
+    }
+
+
   }
 
-  async moveTo(destination, getInside, getOutside){
+  async moveTo(destination, action){
+
     return new Promise((resolve, reject) => {
         const entityVisual = document.getElementById(this.htmlId);
         this.state = "MOVING";
@@ -108,8 +114,9 @@ class Entity {
 
             if ( Math.abs(newPosition - destination) < 5){
 
-                    self.setInsideState(getInside)
-                    self.setOutsideState(getOutside)
+                    self.stateDecider(action, self);
+
+
                     resolve();
                     return
                     }
@@ -126,8 +133,9 @@ class Entity {
             entityVisual.style.left = newPosition + 'px';
 
             if ( Math.abs(newPosition - destination) < 5){
-                self.setInsideState(getInside)
-                self.setOutsideState(getOutside)
+
+                self.stateDecider(action, self);
+
                 resolve();
                 return
             }
@@ -153,13 +161,14 @@ class Entity {
 
     async callElevator(){
         return new Promise((resolve, reject) => {
-            createExternalRequest("DOWN",this.currentFloor);
+            //console.log(this.htmlId)
+            createExternalRequest("DOWN",this.currentFloor, this.htmlId);
             this.state = "WAITING";
             const intervalId2 = setInterval(() => {
 
                             if (this.state == "GETTING IN") {
                                 clearInterval(intervalId2);
-                                console.log("Elevator has arrived!");
+                                //console.log("Elevator has arrived!");
                                 resolve();
                             }
                         }, 500);
@@ -171,16 +180,16 @@ class Entity {
     async makeElevatorRequest(){
         return new Promise((resolve, reject) => {
 
-            createInternalRequest(this.desiredFloor);
+            createInternalRequest(this.desiredFloor, this.htmlId);
             const elev = document.getElementById("elevator");
             const entityVisual = document.getElementById(this.htmlId);
             entityVisual.style.left = parseInt(entityVisual.style.left) - 100 + "px";
             elev.appendChild(entityVisual);
-            this.state = "TRAVELLING";
+            //this.state = "TRAVELLING";
             const intervalId3 = setInterval(() => {
                             if (this.state == "GETTING OUT") {
                                 clearInterval(intervalId3);
-                                console.log("Arrived at floor!");
+                                //console.log("Arrived at floor!");
                                 this.travelComplete = true;
                                 const floor = document.getElementById("floor" + this.desiredFloor);
                                 floor.appendChild(entityVisual)
@@ -211,6 +220,17 @@ class Entity {
 
         }
         return returnEntities;
+    }
+
+    static getEntityById(id){
+            var returnEntity = null;
+            for (var ent of entities){
+                if (ent.htmlId == id){
+                    returnEntity = ent;
+                }
+
+            }
+            return returnEntity;
     }
 
     drawEntity(floorId){
