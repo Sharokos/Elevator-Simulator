@@ -27,21 +27,24 @@ class Queue {
   updateCallQueue(currentFloor, movingDirection, newCall){  
 
 	var updated = false;
-
+//    console.log("Checking for element:" + newCall.id)
+//    console.log("Destination:" + newCall.destinationFloor)
+//    console.log("Direction:" + newCall.direction)
+//    console.log("Type:" + newCall.type)
 	if(this.size() >= 1){
 //	    console.log("New call destination: " + newCall.destinationFloor)
 //        	console.log("Current Floor: " + currentFloor)
 //        	console.log("Old priority call destination: " + this.items[0].destinationFloor)
-        if ((newCall.destinationFloor > currentFloor && newCall.destinationFloor < this.items[0].destinationFloor)){
-            console.log("Condition true")
-            console.log("NewCall direction:")
-            console.log(newCall.direction)
-            console.log("Wanted:")
-            console.log(newCall.wantedDirection)
-            console.log("Moving:")
-            console.log(movingDirection)
-
-        }
+//        if ((newCall.destinationFloor > currentFloor && newCall.destinationFloor < this.items[0].destinationFloor)){
+//            console.log("Condition true")
+//            console.log("NewCall direction:")
+//            console.log(newCall.direction)
+//            console.log("Wanted:")
+//            console.log(newCall.wantedDirection)
+//            console.log("Moving:")
+//            console.log(movingDirection)
+//
+//        }
 		if ((newCall.destinationFloor > currentFloor && newCall.destinationFloor < this.items[0].destinationFloor)||
 		(newCall.destinationFloor < currentFloor && newCall.destinationFloor > this.items[0].destinationFloor)){
 		  if (newCall.direction == movingDirection || newCall.wantedDirection == movingDirection){
@@ -49,7 +52,13 @@ class Queue {
 			this.items.splice(0,0,newCall);  
 			updated = true;
 		  }
-		}  
+		}
+		  else if(newCall.type == "internal"){
+		    console.log("Updating queue")
+            this.items.splice(0,0,newCall);
+            updated = true;
+		}
+
 	}
 		  
 	return updated; 
@@ -79,7 +88,8 @@ class Queue {
 	
       str += "Call#" + i + " " + this.items[i].id + " " + this.items[i].requestFloor + " " 
 	  + this.items[i].destinationFloor 
-	  + " " + this.items[i].direction + "\n";
+	  + " " + this.items[i].direction
+	  + " " + this.items[i].type + "\n";
     }
     return str;
   }

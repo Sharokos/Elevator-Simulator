@@ -7,6 +7,8 @@ class Elevator {
     this.areDoorsOpen = areDoorsOpen;
 	this.movingDirection = movingDirection;
 	this.nextFloor = nextFloor;
+	this.isOccupied = false;
+	this.internalRequest = false;
   }
 	
 

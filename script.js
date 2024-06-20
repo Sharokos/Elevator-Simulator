@@ -1,6 +1,7 @@
 const sizer = new SizeCalculator();
 const rand = new Randomness();
-
+const scenario = new Scenarios();
+const history = [];
 var numberOfFloors = rand.getRandomInt(4, 8);
 const thisElevator = new Elevator(numberOfFloors,0,false,false,"UP", 0);
 const floors = Floor.generateFloors(numberOfFloors);
@@ -15,27 +16,17 @@ for (floor of floors){
 }
 
 
-function moveToElevator(){
-    moveToElevator1()
+function moveToElevator1(){
+    scenario.moveToElevator(entities[0])
 
 }
-async function moveToElevator1(){
-    destination = parseInt(elevator.style.left) + 100;
-    await entities[0].moveTo(destination, false);
-    await entities[0].callElevator();
-    await entities[0].moveTo(destination - 100, true);
-    await entities[0].makeElevatorRequest();
-    await entities[0].moveTo(2000, false);
+function moveToElevator2(){
+    scenario.moveToElevator(entities[1])
+
 }
 
-async function moveToElevator2(){
-    destination = parseInt(elevator.style.left) + 100;
-    await entity2.moveTo(destination);
-    await entity2.callElevator();
-    await entity2.moveTo(destination - 100);
-    await entity2.makeElevatorRequest();
-    await entity2.moveTo(2000);
-}
+
+
 
 
 function displayEntities(){
@@ -52,6 +43,7 @@ const initializer = new InitializeScene(sizer, rand);
 
 var durationPerFloor = 1000;
 var callQueue = new Queue();
+var historyQueue = new Queue();
 let intervalId;
 
 
@@ -88,7 +80,12 @@ function moveElevator(direction) {
 
 	if(thisElevator.getFloor() == thisElevator.getNextFloor()) {
 		console.log(`Floor ${thisElevator.getFloor()} reached. Will stop`)
+		if (callQueue.front().type == "internal"){
+		    thisElevator.internalRequest = false;
+		}
 		callQueue.dequeue();
+
+
 		clearInterval(intervalId);
 
 		return;
@@ -180,14 +177,24 @@ function checkIfEntitiesAreWaiting(enties){
     }
     return false;
 }
-
-function checkFloorEntities(){
-    var enties = Entity.getEntitiesForFloor(thisElevator.currentFloor);
-
-    for (var a of enties){
-        a.displayPosition();
+function checkIfEntitiesAreGettingOut(enties){
+    for (var e in enties){
+        if (e.state=="GETTING OUT"){
+            return true;
+        }
     }
+    return false;
+}
 
+function checkWaitingEntities(){
+    var enties = Entity.getEntitiesForFloor(thisElevator.currentFloor);
+    if (checkIfEntitiesAreWaiting(enties)) {return true;}
+    else {return false;}
+}
+function checkGettingOutEntities(){
+    var enties = Entity.getEntitiesForFloor(thisElevator.currentFloor);
+    if (checkIfEntitiesAreGettingOut(enties)) {return true;}
+    else {return false;}
 }
 
 function spawnEntity(){
@@ -200,15 +207,39 @@ function spawnEntity(){
 
 }
 
+function checkIfElevatorIsEmpty(){
+
+    for (var entity of entities){
+        if (entity.isInside){
+            thisElevator.isOccupied = true;
+            return;
+        }
+    }
+    thisElevator.isOccupied = false;
+}
+
 // DE AICI SE POATE JONGLA CU DECIZIA DE PLECARE A LIFTULUI - poti adauga oricate functii pe care sa le verifici inainte sa plece
 function initialize(){
+    checkIfElevatorIsEmpty();
 
 	if(!callQueue.isEmpty()){
 		//console.log(callQueue.size())
-		updateNextFloor();
+        updateNextFloor();
+
 		if(!thisElevator.isMoving){
-			//console.log("Started with direction " + thisElevator.getDirection())
-			startElevator(thisElevator.getDirection());
+		    if(!checkWaitingEntities() && !checkGettingOutEntities() ){
+		        if(thisElevator.isOccupied){
+		            if(callQueue.front().type == "internal"){
+			            //console.log("Started with direction " + thisElevator.getDirection())
+			            startElevator(thisElevator.getDirection());
+			        }
+			    }
+			    else{
+			        if(callQueue.front().type == "external"){
+                        startElevator(thisElevator.getDirection());
+                    }
+			    }
+			}
 		}
 	}
 }
@@ -219,6 +250,7 @@ function displayElevatorState(){
 	console.log(`Elevator next floor is: ${thisElevator.getNextFloor()}` )
 	console.log(`Elevator direction is: ${thisElevator.getDirection()}` )
 	console.log(`Is elevator moving: ${thisElevator.isMoving}` )
+	console.log(`Is elevator occupied: ${thisElevator.isOccupied}` )
 }
 
 
@@ -235,7 +267,8 @@ function createExternalRequest(wantedDirection, callFloor){
 	else {
 	    direction = "UP";
 	}
-	var eReq = new Request(callFloor, callFloor, direction,wantedDirection);
+	var eReq = new Request(callFloor, callFloor, direction,wantedDirection, "external");
+	historyQueue.enqueue(eReq);
 	if (!callQueue.updateCallQueue(thisElevator.getFloor(), thisElevator.getDirection(), eReq)){
 		callQueue.enqueue(eReq);
 	}
@@ -255,7 +288,9 @@ function createInternalRequest(destination){
 	    direction = "DOWN";
 	    }
 	}
-	var iReq = new Request(currFloor, destination, direction, direction);
+	thisElevator.internalRequest = true;
+	var iReq = new Request(currFloor, destination, direction, direction, "internal");
+	historyQueue.enqueue(iReq);
 	if (!callQueue.updateCallQueue(thisElevator.getFloor(), thisElevator.getDirection(), iReq)){
 		callQueue.enqueue(iReq);
 	}

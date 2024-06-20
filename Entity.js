@@ -10,8 +10,11 @@ class Entity {
     this.direction = direction;
     this.desiredFloor = desiredFloor;
     this.state = "IDLE";
+    this.oldState = "IDLE";
+    this.travelComplete = false;
     this.intervalId= setInterval(this.watcher.bind(this), 500); // Setting up the interval
     this.sizer = new SizeCalculator();
+    this.isInside = false;
 
 
   }
@@ -29,10 +32,10 @@ class Entity {
 
   isElevatorHere(){
 
-    return (thisElevator.currentFloor == this.currentFloor) && (this.state != "TRAVELLING") ? true : false;
+    return (thisElevator.currentFloor == this.currentFloor) && (this.state == "WAITING") && (!this.travelComplete)  ? true : false;
   }
   isEntityArrived(){
-    return this.currentFloor == this.desiredFloor ? true : false;
+    return (this.currentFloor == this.desiredFloor) && (!thisElevator.isMoving) ? true : false;
   }
   updateCurrentFloor(){
 
@@ -54,15 +57,31 @@ class Entity {
 
   watcher(){
     this.isElevatorHere() ? this.state = "GETTING IN" : this.state += "";
-    this.isEntityArrived() ? this.state = "ARRIVED" : this.state += "";
+    this.isEntityArrived() ? this.state = "GETTING OUT" : this.state += "";
+    this.stateWatcher();
     this.updateCurrentFloor();
   }
 
   setInsideState(getInside){
-    getInside ? this.state = "INSIDE ELEVATOR" : this.state = "IDLE";
+    if (getInside){
+        this.state = "INSIDE ELEVATOR";
+        this.isInside = true;
+    }
+    else{
+        this.state = "IDLE";
+    }
+}
+  setOutsideState(getOutside){
+    if (getOutside){
+            this.state = "OUTSIDE ELEVATOR";
+            this.isInside = false;
+        }
+        else{
+            this.state = "IDLE";
+        }
   }
 
-  async moveTo(destination, getInside){
+  async moveTo(destination, getInside, getOutside){
     return new Promise((resolve, reject) => {
         const entityVisual = document.getElementById(this.htmlId);
         this.state = "MOVING";
@@ -90,6 +109,7 @@ class Entity {
             if ( Math.abs(newPosition - destination) < 5){
 
                     self.setInsideState(getInside)
+                    self.setOutsideState(getOutside)
                     resolve();
                     return
                     }
@@ -107,6 +127,7 @@ class Entity {
 
             if ( Math.abs(newPosition - destination) < 5){
                 self.setInsideState(getInside)
+                self.setOutsideState(getOutside)
                 resolve();
                 return
             }
@@ -157,10 +178,10 @@ class Entity {
             elev.appendChild(entityVisual);
             this.state = "TRAVELLING";
             const intervalId3 = setInterval(() => {
-                            if (this.state == "ARRIVED") {
+                            if (this.state == "GETTING OUT") {
                                 clearInterval(intervalId3);
                                 console.log("Arrived at floor!");
-
+                                this.travelComplete = true;
                                 const floor = document.getElementById("floor" + this.desiredFloor);
                                 floor.appendChild(entityVisual)
                                 entityVisual.style.left = parseInt(entityVisual.style.left) + 100 + "px";
@@ -173,8 +194,11 @@ class Entity {
     }
 
     displayPosition(){
-
-        console.log("The left position is: " + this.drawing.left + "state? " + this.state  + " floor? " + this.currentFloor)
+        console.log("The left position is: " + this.drawing.left)
+        console.log("state? " + this.state)
+        console.log("floor? " + this.currentFloor)
+        console.log("is inside? " + this.isInside)
+        console.log("travel complete? " + this.travelComplete)
     }
 
 
@@ -203,6 +227,16 @@ class Entity {
         floorVisual.appendChild(objectVisual);
 
 
+
+      }
+
+      stateWatcher(){
+
+        if (this.state != this.oldState) {
+            console.log("State change for entityID: " + this.htmlId);
+            console.log("State change from: " + this.oldState  + " to: " + this.state);
+            this.oldState = this.state;
+        }
 
       }
 
