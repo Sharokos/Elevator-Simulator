@@ -3,7 +3,8 @@ class SizeCalculator {
   constructor() {
   //Empty constructor
   }
-
+  // TODO: Elevator is not repositioned on the currentFloor at screen resizing!
+  // TODO: Entity resizing to be implemented!
   getWindowDimensions(){
   	const aspectRatio = 16 / 9;
 

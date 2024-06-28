@@ -3,11 +3,11 @@ const rand = new Randomness();
 const scenario = new Scenarios();
 const history = [];
 var numberOfFloors = rand.getRandomInt(4, 8);
-const thisElevator = new Elevator(numberOfFloors,0,false,false,"UP", 0);
+const thisElevator = new Elevator(numberOfFloors,0,false,true,"UP", 0);
 const floors = Floor.generateFloors(numberOfFloors);
 var entities = []
 
-
+// TODO: Add decision functions for starting the elevator (waiting entities/getting in/out...)
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -18,10 +18,11 @@ function displayFloors(){
 }
 
 
-function moveToElevator(){
+async function moveToElevator(){
     for (var entity of entities){
         scenario.moveToElevator(entity)
-        delay(5000);
+        await delay(5000);
+
     }
 
 }
@@ -75,12 +76,11 @@ window.addEventListener('resize', resizeScene);
 
 initializer.init(floors); // Initial call
 scrollToBottom('scene');
-var elevator = document.getElementById('elevator');
+const elevator = document.getElementById('elevator');
 
 
-function startElevator(direction){
-    console.log("Starting elevator.")
-//	intervalId = setInterval(thisElevator.moveElevator.bind(thisElevator), 100);
+async function startElevator(){
+
     thisElevator.moveElevator();
 
 }
@@ -89,8 +89,7 @@ function startElevator(direction){
 function areEntitiesLeftOutside(enties){
     for (var e of enties){
 
-        if ((e.state !== "INSIDE ELEVATOR") && (e.state !== "MOVING")){
-            console.log(e.htmlId + " is waiting.")
+        if ((e.state == "GETTING IN") && (e.state == "WAITING")){
 
             return true;
         }
@@ -99,8 +98,8 @@ function areEntitiesLeftOutside(enties){
 }
 function checkIfEntitiesAreGettingOut(enties){
     for (var e of enties){
-        if (e.state=="GETTING OUT"){
-            console.log(e.htmlId + " is getting out.")
+        if ((e.state=="GETTING OUT") || (e.state=="OUTSIDE ELEVATOR")){
+
             return true;
         }
     }
@@ -132,6 +131,8 @@ function spawnEntity(){
 
 }
 
+
+
 function checkIfElevatorIsEmpty(){
 
     for (var entity of entities){
@@ -144,130 +145,49 @@ function checkIfElevatorIsEmpty(){
 }
 
 
-function clearQueue(){
-    //console.log(callQueue.printQueue())
-    for (var req of callQueue.items){
-        var entity = Entity.getEntityById(req.callerId);
 
-        if ((entity.state == "GETTING IN") || (entity.state == "TRAVELLING")){
-
-            if (req.type == "external"){
-//                console.log("external")
-                callQueue.removeItem(req);
-            }
-        }
-        if ((entity.state == "GETTING OUT") || (entity.state == "MOVING")){
-            console.log("getting out sau moving")
-            if (req.type == "internal"){
-//                console.log("internal")
-                callQueue.removeItem(req);
-            }
-        }
-
-    }
-}
 
 // DE AICI SE POATE JONGLA CU DECIZIA DE PLECARE A LIFTULUI - poti adauga oricate functii pe care sa le verifici inainte sa plece
-function initialize(){
-    checkIfElevatorIsEmpty();
-    clearQueue();
+async function initialize(){
+
+//    checkIfElevatorIsEmpty();
+//    clearQueue();
 	if(!callQueue.isEmpty()){
-		//console.log(callQueue.size())
+		if(!thisElevator.isBusy){
 
-        thisElevator.updateNextFloor();
-
-		if(!thisElevator.isMoving){
-//		    console.log("Not moving.")
-		    if(!checkOutsideEntities() && !checkGettingOutEntities() ){
-//		        console.log("No one waiting.")
-
-		        if(thisElevator.isOccupied){
-
-		            if(callQueue.front().type == "internal"){
-//		                console.log("Occupied and Internal")
-			            //console.log("Started with direction " + thisElevator.getDirection())
-			            startElevator(thisElevator.getDirection());
-			        }
-			        else{
-
-			            console.log("Not starting because elevator is occupied, but the next call is external.")
-			        }
-			    }
-			    else{
-			        if(callQueue.front().type == "external"){
-//			            console.log("Empty and external.")
-                        startElevator(thisElevator.getDirection());
-                    }
-                    else{
-                        console.log("Not starting because elevator is empty, but the next call is internal.")
-                    }
-			    }
-			}
-			else{
-                console.log("Not starting because entities are waiting or getting out.")
-			}
-		}
-		else{
-		    //console.log("Not starting because elevator is already moving.")
-		}
-	}
-	else{
-	    //console.log("Not starting because queue is empty.")
-	}
+            startElevator();
+        }
+    }
 }
 intervalId2 = setInterval(initialize, 100);
 
 function displayElevatorState(){
-	console.log(`Elevator current floor is: ${thisElevator.getFloor()}` )
-	console.log(`Elevator next floor is: ${thisElevator.getNextFloor()}` )
-	console.log(`Elevator direction is: ${thisElevator.getDirection()}` )
+	console.log(`Elevator current floor is: ${thisElevator.currentFloor}` )
+
+	console.log(`Elevator direction is: ${thisElevator.movingDirection}` )
+	console.log(`Doors: ${thisElevator.areDoorsOpen}` )
 	console.log(`Is elevator moving: ${thisElevator.isMoving}` )
 	console.log(`Is elevator occupied: ${thisElevator.isOccupied}` )
+	console.log(`Is elevator at destination: ${thisElevator.isAtDestination}` )
+
+
 }
 
 
-function createExternalRequest(wantedDirection, callFloor, callerId){
-	var currFloor = thisElevator.getFloor();
-	var nextFloor = thisElevator.getNextFloor();
-	var direction = "UP";
-	if (callFloor < currFloor){
-	    direction = "DOWN";
-	}
-	if (callFloor < nextFloor){
-	    direction = "DOWN";
-	}
-	else {
-	    direction = "UP";
-	}
-	var eReq = new Request(callFloor, callFloor, direction,wantedDirection, "external", callerId);
-	historyQueue.enqueue(eReq);
-	if (!callQueue.updateCallQueue(thisElevator.getFloor(), thisElevator.getDirection(), eReq)){
-		callQueue.enqueue(eReq);
-	}
-	
+
+function createExternalRequest(floor, direction){
+	var call = new Request(floor, direction, "external", "id");
+	callQueue.addNewCall(call);
+
+
 }
 
-function createInternalRequest(destination, callerId){
-//    console.log("INTERNAL AT: " + Date.now())
-	var currFloor = thisElevator.getFloor();
-	var nextFloor = thisElevator.getNextFloor();
+function createInternalRequest(floor){
+	var call = new Request(floor,  "UP", "internal", "id");
+	callQueue.addNewCall(call);
 
-	var direction = "UP";
-	if (destination < currFloor){
-		direction = "DOWN";
-	}
-	if (currFloor == destination){
-	    if (destination < nextFloor){
-	    direction = "DOWN";
-	    }
-	}
-	thisElevator.internalRequest = true;
-	var iReq = new Request(currFloor, destination, direction, direction, "internal", callerId);
-	historyQueue.enqueue(iReq);
-	if (!callQueue.updateCallQueue(thisElevator.getFloor(), thisElevator.getDirection(), iReq)){
-		callQueue.enqueue(iReq);
-	}
 }
+
 
 
 function displayRequestCalls(){

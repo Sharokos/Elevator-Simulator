@@ -6,136 +6,137 @@ class Elevator {
     this.isMoving = isMoving;
     this.areDoorsOpen = areDoorsOpen;
 	this.movingDirection = movingDirection;
-	this.nextFloor = nextFloor;
 	this.isOccupied = false;
-	this.internalRequest = false;
+	this.isBusy = false;
 	this.isAtDestination = false;
+	this.intervalId= setInterval(this.watcher.bind(this), 100); // Setting up the interval
   }
 	
+    async openDoors(){
 
+        return new Promise(async (resolve, reject) => {
+            console.log("Doors are opening")
 
-
-
-	getFloor(){
-		return this.currentFloor;
-	}	
-	getNextFloor(){
-		return this.nextFloor;
-	}		
-	getDirection(){
-		return this.movingDirection;
-	}	
-	setFloor(floor){
-		this.currentFloor = floor;
-	}	
-	setNextFloor(nextFloor){
-		this.nextFloor = nextFloor;
-	}
-	setDirection(movingDirection){
-		this.movingDirection = movingDirection;
-	}
-	moveToFloor(floor) {
-		
-		//console.log(`Moving from ${this.currentFloor} to ${floor}!`);
-		this.setFloor(floor);
-  }
-
-  computeDirection(){
-    return (this.currentFloor > this.nextFloor) ? this.direction = "DOWN" : this.direction = "UP";
-
-  }
-  updateNextFloor(){
-  	var nextFloor;
-  	var direction;
-  	if (!callQueue.isEmpty()){
-  		nextFloor = callQueue.front().destinationFloor;
-
-  	} else {
-  		nextFloor = this.getFloor();
-  		direction = "UNKNOWN";
-
-  	}
-  	this.setNextFloor(nextFloor);
-
-  }
-      moveElevator() {
-
-        var direction = this.computeDirection();
-    	if(this.getFloor() == this.getNextFloor()) {
-    		console.log(`Floor ${this.getFloor()} reached. Will stop`)
-    		if (callQueue.front().type == "internal"){
-    		    this.internalRequest = false;
-    		}
-
-
-
-    		clearInterval(intervalId);
-
-    		return;
-    		}
-    	const self = this;
-    	if (!this.isMoving){
-    		//console.log("Is not moving. Will move with direction = " + direction)
-    		this.isMoving = true;
-
-    		var startPosition = parseInt(elevator.style.bottom);
-    		var currFloor = this.getFloor();
-
-    		var startTime = null;
-
-    		var distance = sizer.calculateFloorHeight();
-    		var duration = durationPerFloor;
-
-
-
-    		function animateUp(timestamp) {
-    			if (!startTime) startTime = timestamp;
-
-    			var progress = timestamp - startTime;
-    			var elapsedTime = Math.min(progress, duration);
-    			var newPosition = startPosition + (distance / duration) * elapsedTime;
-    			elevator.style.bottom = newPosition + 'px';
-
-    			if (progress < duration) {
-    				requestAnimationFrame(animateUp);
-    			}
-    			else{
-    				self.isMoving = false;
-    				self.isAtDestination = true;
-    				self.moveToFloor(currFloor + 1);
-    			}
-    		}
-    		function animateDown(timestamp) {
-    			if (!startTime) startTime = timestamp;
-
-    			var progress = timestamp - startTime;
-    			var elapsedTime = Math.min(progress, duration);
-    			var newPosition = startPosition - (distance / duration) * elapsedTime;
-    			elevator.style.bottom = newPosition + 'px';
-
-    			if (progress < duration) {
-    				requestAnimationFrame(animateDown);
-    			}
-    			else{
-    				self.isMoving = false;
-    				self.isAtDestination = true;
-    				self.moveToFloor(currFloor - 1);
-    			}
-    		}
-
-            direction = this.computeDirection();
-    		if (direction == "UP"){
-    			//console.log("Will move up");
-    			requestAnimationFrame(animateUp);
-
-    		} else{
-    			//console.log("Will move down.")
-    			requestAnimationFrame(animateDown);
-
-
-    		}
-    	}
+            await delay(2000)
+            this.areDoorsOpen = true;
+            console.log("Doors opened.")
+            resolve();
+        });
     }
+    async closeDoors(){
+
+        return new Promise(async (resolve, reject) => {
+            console.log("Doors are closing")
+
+            await delay(2000)
+            this.areDoorsOpen = false;
+            console.log("Doors closed")
+            resolve();
+        });
+    }
+
+    updateDirection(){
+        if (callQueue.front()){
+            if (this.currentFloor > callQueue.front().requestFloor){
+
+                this.movingDirection = "DOWN";
+            }
+            else{
+
+                this.movingDirection = "UP";
+            }
+        }
+    }
+
+    watcher(){
+       this.updateDirection();
+    }
+
+
+
+
+
+  async moveOneFloor(){
+    if (this.movingDirection == "DOWN"){
+        await this.moveDown();
+
+    }
+    else{
+
+        await this.moveUp();
+    }
+  }
+
+
+  async moveElevator() {
+        this.isBusy = true;
+        if (this.areDoorsOpen){
+
+            await this.closeDoors();
+
+        }
+        while (this.currentFloor != callQueue.front().requestFloor){
+
+            this.isMoving = true;
+            this.isAtDestination = false;
+            
+    	    await this.moveOneFloor();
+
+        }
+        // replace with actual waiting function? (sa se dea jos entitatile/ sa urce?) - un await care primeste resolve doar atunci cand nu exista entities getting out sau getting in
+        // alternativa: in functia de check care cheama moveElevator sa adaugi verificarile pt pornire - sa nu ai wait aici - poate doar pt open/close doors
+        await this.openDoors();
+        this.isAtDestination = true;
+        this.isBusy = false;
+        this.isMoving = false;
+
+        callQueue.dequeue();
+
+    }
+    // ANIMATION FUNCTIONS
+
+
+    async moveDown(){
+
+
+        var startPosition = parseInt(elevator.style.bottom);
+        var distance = sizer.calculateFloorHeight();
+        var destination = startPosition - distance;
+        var newPosition = startPosition;
+
+        while(Math.abs(newPosition - destination) > 1){
+
+            await delay(20);
+            newPosition -= distance / 50;
+            elevator.style.bottom = newPosition + 'px';
+        }
+            this.currentFloor -= 1;
+
+            return;
+
+
+    }
+    async moveUp(){
+
+        var startPosition = parseInt(elevator.style.bottom);
+        var distance = sizer.calculateFloorHeight();
+        var destination = startPosition + distance;
+        var newPosition = startPosition;
+
+        while(Math.abs(newPosition - destination) > 1){
+            //console.log("move in while")
+            await delay(20);
+
+            newPosition += distance / 50;
+
+            elevator.style.bottom = newPosition + 'px';
+        }
+            this.currentFloor += 1;
+
+            return;
+
+    }
+
 
 }
 

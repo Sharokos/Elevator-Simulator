@@ -1,143 +1,166 @@
 class Queue {
   constructor() {
     this.items = [];
-    this.updating = false;
-    this.oldSize = 0;
+	this.currentFloor = 0; //Mock-up to simulate elevator
+	this.elevatorDir = "UP"; //Mock-up to simulate elevator
+
+	this.isBusy = false;
   }
 
-  // Add element to the queue
-  enqueue(element) {
-    this.items.push(element);
-  }
+	isInternalCallInQ(){
 
-  // Remove and return the first element from the queue
-  dequeue() {
-    if (this.isEmpty()) {
-      return "Underflow";
-    }
-    return this.items.shift();
-  }
-
-  removeItem(item){
-    if (this.isEmpty()) {
-          return "Underflow";
-    }
-    if (this.checkSize()){
-        const index = this.findIndexOfElement(item);
-//        console.log("BEFORE")
-//
-//        console.log(this.printQueue());
-        this.items.splice(index, 1);
-//        console.log(index);
-//        console.log("AFTER")
-//        console.log(this.printQueue());
-    }
-    else{
-//        console.log("Can't remove because updating.")
-    }
-  }
-
-  // Return the first element from the queue without removing it
-  front() {
-    if (this.isEmpty()) {
-      return "No elements in Queue";
-    }
-    return this.items[0];
-  }
-
-  updateCallQueue(currentFloor, movingDirection, newCall){  
-    this.updating = false;
-	var updated = false;
-//    console.log("Checking for element:" + newCall.id)
-//    console.log("Destination:" + newCall.destinationFloor)
-//    console.log("Direction:" + newCall.direction)
-//    console.log("Type:" + newCall.type)
-	if(this.size() >= 1){
-//	    console.log("New call destination: " + newCall.destinationFloor)
-//        	console.log("Current Floor: " + currentFloor)
-//        	console.log("Old priority call destination: " + this.items[0].destinationFloor)
-//        if ((newCall.destinationFloor > currentFloor && newCall.destinationFloor < this.items[0].destinationFloor)){
-//            console.log("Condition true")
-//            console.log("NewCall direction:")
-//            console.log(newCall.direction)
-//            console.log("Wanted:")
-//            console.log(newCall.wantedDirection)
-//            console.log("Moving:")
-//            console.log(movingDirection)
-//
-//        }
-		if ((newCall.destinationFloor > currentFloor && newCall.destinationFloor < this.items[0].destinationFloor)||
-		(newCall.destinationFloor < currentFloor && newCall.destinationFloor > this.items[0].destinationFloor)){
-		  if (newCall.direction == movingDirection || newCall.wantedDirection == movingDirection){
-//		    console.log("Updating queue")
-			this.items.splice(0,0,newCall);  
-			updated = true;
-			this.updating = true;
-
-		  }
+		for (var item of this.items){
+			if (item.type == "internal"){
+				return true;
+			}
 		}
-		  else if(newCall.type == "internal"){
-//		    console.log("Updating queue")
-            this.items.splice(0,0,newCall);
-            updated = true;
-            this.updating = true;
+		return false;
+
+	}
+
+	isCallOnTheWay(call){
+		if (this.elevatorDir == "UP"){
+			if((call.requestFloor < this.front().requestFloor) && (call.requestFloor > this.currentFloor)){
+				return true;
+			}
+			else{ return false; }
+		}
+		else{
+			if((call.requestFloor > this.front().requestFloor) && (call.requestFloor < this.currentFloor)){ // to add also the check for currentFloor when implementing elevator
+				return true;
+			}
+			else{ return false; }
+		}
+	}
+
+    // List of corner cases - TODO
+	// I2 E1D I3 ?
+	addNewCall(call){
+		if (!this.isEmpty()){
+			if (this.isInternalCallInQ()){
+			    console.debug("Internal call existing in Q.")
+				if (call.type == "internal"){
+				    console.debug("Current call is internal.")
+					if (this.isCallOnTheWay(call)){
+					    console.debug("Current call is on the way - prioritize.")
+						this.firstInQueue(call);
+
+					}
+					else{
+                        console.debug("Current call is NOT on the way - adding before any external.")
+
+                        this.enqueueInternal(call);
+					}
+
+				}
+				else {
+				    console.debug("Current call is external.")
+					if (call.desiredDirection == this.elevatorDir){
+					    console.debug("Current call is in the same direction. - prioritize")
+						this.firstInQueue(call);
+					}
+					else{
+					    console.debug("Current call is not in the same direction.")
+					    this.enqueue(call);
+
+					}
+				}
+
+			}
+			else {
+			    console.debug("No other internals.")
+				if (call.type == "internal"){
+				    console.debug("Current call is internal. - prioritize")
+					this.firstInQueue(call);
+				}
+				else{
+				    console.debug("Current call is external.")
+					if (call.desiredDirection == this.elevatorDir){
+					    console.debug("Current call is in the same direction. - prioritize")
+						this.firstInQueue(call);
+					}
+					else{
+					    this.enqueue(call);
+					    console.debug("Current call is not in the same direction.")
+					}
+				}
+
+			}
+		}
+		else{
+		    console.debug("Q is empty - adding")
+			this.enqueue(call);
+		}
+
+
+
+	}
+
+
+	enqueue(element) {
+		this.items.push(element);
+	}
+
+
+	dequeue() {
+		if (this.isEmpty()) {
+			return "Underflow";
+		}
+			console.log("DEQUEUE")
+			this.items.shift();
+
+	}
+
+
+	// Return the first element from the queue without removing it
+	front() {
+		if (this.isEmpty()) {
+		  return "No elements in Queue";
+		}
+			return this.items[0];
+	}
+
+
+	getFirstExternalInQueue(){
+
+		for (var call of this.items){
+
+			if (call.type == "external"){
+				return call;
+			}
 		}
 
 	}
-		  
-	return updated; 
-  }
-  checkSize(){
-    if (this.oldSize != this.size()){
-        this.oldSize = this.size();
-        return false;
+	enqueueInternal(call){
+		var firstExternal = this.getFirstExternalInQueue();
+        if (firstExternal){
+		    this.addBeforeIndex(call, firstExternal);
+		}
+		else{
+		    this.enqueue(call);
+		}
+	}
 
-    }
-    return true;
-  }
-  // Check if the queue is empty
-  isEmpty() {
-    return this.items.length === 0;
-  }
+	isEmpty() {
+		return this.items.length === 0;
+	}
 
-  // Return the size of the queue
-  size() {
-    return this.items.length;
-  }
-  
-  addBeforeIndex(element1, element2){
-	  
+
+	size() {
+		return this.items.length;
+	}
+
+	firstInQueue(call){
+		this.addBeforeIndex(call, this.front())
+	}
+
+	addBeforeIndex(element1, element2){
+
 	  var index = this.items.indexOf(element2);
 	  if (index != -1){
 		this.items.splice(index, 0, element1);
 	  }
-  }
-  // Print the queue elements
-  printQueue() {
-    let str = "";
-    for (let i = 0; i < this.items.length; i++) {
-	
-      str += "Call#" + i + " " + this.items[i].id + " " + this.items[i].requestFloor + " " 
-	  + this.items[i].destinationFloor 
-	  + " " + this.items[i].direction
-	  + " CALLER " + this.items[i].callerId
-	  + " " + this.items[i].type + "\n";
-    }
-    return str;
-  }
-  
-  
-  findIndexOfElement(element){
-	  
-	  
-	for (let i = 0; i< this.size(); i++){
-		
-
-			if (element.id == this.items[i].id){
-
-				return i;
-				
-			}
-		}
 	}
+
+
 }

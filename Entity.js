@@ -10,10 +10,13 @@ class Entity {
     this.spawnFloor = currentFloor;
     this.direction = direction;
     this.desiredFloor = desiredFloor;
+    // States:
+
     this.state = "IDLE";
     this.oldState = "IDLE";
     this.travelComplete = false;
-    this.intervalId= setInterval(this.watcher.bind(this), 500); // Setting up the interval
+    this.callTaken = false;
+    this.intervalId= setInterval(this.watcher.bind(this), 100); // Setting up the interval
     this.sizer = new SizeCalculator();
     this.isInside = false;
 
@@ -38,6 +41,8 @@ class Entity {
   isEntityArrived(){
     return (this.currentFloor == this.desiredFloor) && (!thisElevator.isMoving) && (this.spawnFloor != this.desiredFloor) && (this.state != "OUTSIDE ELEVATOR") ? true : false;
   }
+
+  // poate poti calcula etajul de la lift (if inside) -> stii spawn floor si apoi cat e in lift updatezi constant etajul pana la destinatie!
   updateCurrentFloor(){
 
     var floorBot = sizer.getAbsoluteBot(this.htmlId)
@@ -55,40 +60,70 @@ class Entity {
 
 
   }
+  // This is only for visual reasons
+  addEntityToElevator(){
+    const entityVisual = document.getElementById(this.htmlId);
+    elevator.appendChild(entityVisual);
+    entityVisual.style.left = parseInt(entityVisual.style.left) - 100 + "px";
 
-  watcher(){
-    if (!this.travelComplete){
-        this.isElevatorHere() ? this.state = "GETTING IN" : this.state += "";
-        this.isEntityArrived() ? this.state = "GETTING OUT" : this.state += "";
+
+  }
+  // This is only for visual reasons
+  addEntityToFloor(){
+    const floor = document.getElementById("floor" + this.desiredFloor);
+    floor.appendChild(entityVisual)
+    entityVisual.style.left = parseInt(entityVisual.style.left) + 100 + "px";
+  }
+
+  async getInside(){
+    var elevatorPosition = parseInt(elevator.style.left); // poate o poti face cumva o proprietate a liftului updatata constant din sizer?
+    this.state = "GETTING IN";
+    await this.moveTo(elevatorPosition);
+    this.addEntityToElevator();
+    this.state = "INSIDE"
+  }
+  async getOutside(){
+    var elevatorPosition = parseInt(elevator.style.left); // poate o poti face cumva o proprietate a liftului updatata constant din sizer?
+    this.state = "GETTING OUT";
+    await this.moveTo(elevatorPosition + 100);
+    this.addEntityToFloor();
+    this.state = "OUTSIDE"
+  }
+  // poate adaugi si !isElevatorMoving pt astea ca sa eviti orice zambra
+  getInDecider(){
+    // Make sure you get in only if: elevator is present, doors are open and entity is waiting
+    if (this.isElevatorHere() && this.state == "WAITING" && thisElevator.areDoorsOpen){
+        this.state = "READY TO GET IN";
+        console.log("Going in!")
     }
-    //this.stateWatcher();
+
+  }
+
+  getOutDecider(){
+    // Make sure the elevator is stopped at the destination, the entity is at the desired floor and of course the doors are open
+      if (thisElevator.isAtDestination && this.state == "AT DESTINATION" && thisElevator.areDoorsOpen){
+          this.state = "READY TO GET OUT";
+          console.log("Going out!")
+      }
+
+    }
+  watcher(){
+//    if (!this.travelComplete){
+//        this.isElevatorHere() ? this.state = "GETTING IN" : this.state += "";
+//        this.isEntityArrived() ? this.state = "GETTING OUT" : this.state += "";
+//    }
+    this.getInDecider();
+    this.getOutDecider();
+    // in state watcher adaugi toate eventurile care trebuie sa aiba loc in functie de starea entitatii
+    this.stateWatcher();
     this.updateCurrentFloor();
   }
 
-  stateDecider(action, self){
 
-    if (action == "GET IN"){
-
-        self.isInside = true;
-        self.state = "INSIDE ELEVATOR";
-        return;
-    }
-    if (action == "GET OUT"){
-        self.isInside = false;
-        self.state = "OUTSIDE ELEVATOR";
-        return;
-    }
-    if (action =="LEAVE SCENE"){
-        self.state = "DONE"
-        return;
-    }
-
-
-  }
-
+    // poate o refactor ca la elevator
   async moveTo(destination, action){
 
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
         const entityVisual = document.getElementById(this.htmlId);
         this.state = "MOVING";
         var startTime = null;
@@ -104,6 +139,11 @@ class Entity {
         }
         var newPosition = 0;
         var speed = 0.5;
+
+
+//        if ((action == "GET IN") || (action = "GET OUT")){
+//            await this.waitForDoors();
+//        }
         function animateRight(timestamp) {
             if (!startTime) startTime = timestamp;
 
@@ -114,7 +154,7 @@ class Entity {
 
             if ( Math.abs(newPosition - destination) < 5){
 
-                    self.stateDecider(action, self);
+
 
 
                     resolve();
@@ -134,17 +174,12 @@ class Entity {
 
             if ( Math.abs(newPosition - destination) < 5){
 
-                self.stateDecider(action, self);
+
 
                 resolve();
                 return
             }
             requestAnimationFrame(animateLeft);
-
-
-
-
-
         }
 
         if (this.direction == "RIGHT"){
@@ -158,56 +193,26 @@ class Entity {
 
   }
 
-
-    async callElevator(){
-        return new Promise((resolve, reject) => {
-            //console.log(this.htmlId)
-            createExternalRequest("DOWN",this.currentFloor, this.htmlId);
-            this.state = "WAITING";
-            const intervalId2 = setInterval(() => {
-
-                            if (this.state == "GETTING IN") {
-                                clearInterval(intervalId2);
-                                //console.log("Elevator has arrived!");
-                                resolve();
-                            }
-                        }, 500);
-
-        });
+    // fara async aici poate? setezi starea pe waiting si apoi sa ai ceva intr-un watcher... if waiting si elevatorHere -> state = getIn si urci
+    callElevator(){
+        //console.log(this.htmlId)
+        createExternalRequest(this.currentFloor, "DOWN");
+        this.state = "WAITING";
     }
 
 
-    async makeElevatorRequest(){
-        return new Promise((resolve, reject) => {
-
-            createInternalRequest(this.desiredFloor, this.htmlId);
-            const elev = document.getElementById("elevator");
-            const entityVisual = document.getElementById(this.htmlId);
-            entityVisual.style.left = parseInt(entityVisual.style.left) - 100 + "px";
-            elev.appendChild(entityVisual);
-            //this.state = "TRAVELLING";
-            const intervalId3 = setInterval(() => {
-                            if (this.state == "GETTING OUT") {
-                                clearInterval(intervalId3);
-                                //console.log("Arrived at floor!");
-                                this.travelComplete = true;
-                                const floor = document.getElementById("floor" + this.desiredFloor);
-                                floor.appendChild(entityVisual)
-                                entityVisual.style.left = parseInt(entityVisual.style.left) + 100 + "px";
-                                resolve();
-                            }
-                        }, 500);
-
-        });
-
+    makeElevatorRequest(){
+        createInternalRequest(this.desiredFloor);
+        this.state = "REQUEST TAKEN"
     }
 
     displayPosition(){
-        console.log("The left position is: " + this.drawing.left)
+        console.log("Id: " + this.htmlId)
         console.log("state? " + this.state)
         console.log("floor? " + this.currentFloor)
         console.log("is inside? " + this.isInside)
         console.log("travel complete? " + this.travelComplete)
+        console.log("call taken? " + this.callTaken)
     }
 
 
@@ -238,6 +243,7 @@ class Entity {
         const floorVisual = document.getElementById(floorId);
         objectVisual.setAttribute('class', 'entityVisual');
         objectVisual.setAttribute('id', this.htmlId);
+        objectVisual.innerHTML = this.state + " " + this.callTaken;
 
 
         objectVisual.style.height = sizer.calculateObjectSize(this)[1] + "px";
@@ -250,12 +256,26 @@ class Entity {
 
       }
 
-      stateWatcher(){
+      async stateWatcher(){
 
         if (this.state != this.oldState) {
-            console.log("State change for entityID: " + this.htmlId);
-            console.log("State change from: " + this.oldState  + " to: " + this.state);
+            const objectVisual = document.getElementById(this.htmlId);
+            objectVisual.innerHTML = this.state + " " + this.callTaken ;
+//            console.log("State change for entityID: " + this.htmlId);
+//            console.log("State change from: " + this.oldState  + " to: " + this.state);
             this.oldState = this.state;
+            if (this.state == "READY TO GET IN"){
+                await this.getInside();
+            }
+            if (this.state == "READY TO GET OUT"){
+                await this.getOutside();
+            }
+//            if (this.state == "INSIDE"){
+//                this.addEntityToElevator();
+//            }
+//            if (this.state == "GETTING OUT"){ //vezi daca nu e mai bine sa faci cu state == outside
+//                this.addEntityToFloor();
+//            }
         }
 
       }

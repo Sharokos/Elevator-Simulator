@@ -23,7 +23,7 @@
 			<button onclick="createInternalRequest(2)">2</button>
 			<button onclick="createInternalRequest(3)">3</button>
 			<button onclick="createInternalRequest(4)">4</button>
-			<button onclick="createInternalRequest(5)">5</button>
+
 			<select id="numberDropdown">
 			  <option value="0">P</option>
 			  <option value="1">1</option>
@@ -39,11 +39,16 @@
 			<button onclick="moveToElevator()">Move entity</button>
 
 			<button onclick="displayEntities()">Entity</button>
-			<button onclick="createInternalRequest(0)">Ext0</button>
-			<button onclick="createInternalRequest(1)">Ext1</button>
-			<button onclick="createInternalRequest(2)">Ext2</button>
-			<button onclick="createInternalRequest(3)">Ext3</button>
-			<button onclick="createInternalRequest(4)">Ext4</button>
+			<button onclick="createExternalRequest(0,'UP')">Ext0</button>
+			<button onclick="createExternalRequest(1,'UP')">E1U</button>
+			<button onclick="createExternalRequest(1,'DOWN')">E1D</button>
+			<button onclick="createExternalRequest(2,'UP')">E2U</button>
+			<button onclick="createExternalRequest(2,'DOWN')">E2D</button>
+			<button onclick="createExternalRequest(3,'UP')">E3U</button>
+			<button onclick="createExternalRequest(3,'DOWN')">E3D</button>
+			<button onclick="createExternalRequest(4,'DOWN')">E4D</button>
+			<button onclick="createExternalRequest(4,'UP')">E4U</button>
+
 
 		</div>
 </div>
