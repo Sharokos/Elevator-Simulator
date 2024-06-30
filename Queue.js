@@ -106,7 +106,7 @@ class Queue {
 		if (this.isEmpty()) {
 			return "Underflow";
 		}
-			console.log("DEQUEUE")
+			console.debug("DEQUEUE")
 			this.items.shift();
 
 	}
@@ -160,6 +160,18 @@ class Queue {
 	  if (index != -1){
 		this.items.splice(index, 0, element1);
 	  }
+	}
+    removeItem(item){
+        var index = this.items.indexOf(item);
+        if (index != -1){
+            this.items.splice(index, 1);
+      }
+    }
+	printQueue(){
+	    for (var item of this.items){
+	        console.log(item.id + item.type + item.requestFloor + item.desiredDirection)
+	    }
+
 	}
 
 

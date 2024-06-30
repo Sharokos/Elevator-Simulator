@@ -1,7 +1,9 @@
 // ITI TREBUIE ACTUAL POSITION SI PROBABIL ACTUAL DIMENSIONS LA TOATE
 class Entity {
   static nextId = 1;
+  static entityList = [];
   constructor(type, drawing, htmlId, currentFloor, direction,desiredFloor) {
+
     this.type = type;
 
     this.drawing = drawing;
@@ -31,7 +33,9 @@ class Entity {
       var drawing = new DrawingProperties(size, 0.5, "random", "path", left, "portrait");
 
       console.log("Creating entity at : " + floor + " wanting to go to: " + desiredFloor);
-      return new Entity("random",drawing, 0, floor, "random",desiredFloor);
+      var generatedEntity = new Entity("random",drawing, 0, floor, "random",desiredFloor);
+      Entity.entityList.push(generatedEntity);
+      return generatedEntity;
   }
 
   isElevatorHere(){
@@ -70,6 +74,7 @@ class Entity {
   }
   // This is only for visual reasons
   addEntityToFloor(){
+    const entityVisual = document.getElementById(this.htmlId);
     const floor = document.getElementById("floor" + this.desiredFloor);
     floor.appendChild(entityVisual)
     entityVisual.style.left = parseInt(entityVisual.style.left) + 100 + "px";
@@ -77,33 +82,42 @@ class Entity {
 
   async getInside(){
     var elevatorPosition = parseInt(elevator.style.left); // poate o poti face cumva o proprietate a liftului updatata constant din sizer?
-    this.state = "GETTING IN";
-    await this.moveTo(elevatorPosition);
-    this.addEntityToElevator();
-    this.state = "INSIDE"
+
+    if (!thisElevator.doorsAreMoving){
+        this.state = "GETTING IN";
+        await this.moveTo(elevatorPosition);
+        this.addEntityToElevator();
+        this.state = "INSIDE"
+        thisElevator.isBusy = false;
+    }
+
   }
   async getOutside(){
     var elevatorPosition = parseInt(elevator.style.left); // poate o poti face cumva o proprietate a liftului updatata constant din sizer?
-    this.state = "GETTING OUT";
-    await this.moveTo(elevatorPosition + 100);
-    this.addEntityToFloor();
-    this.state = "OUTSIDE"
+    if (!thisElevator.doorsAreMoving){
+        this.state = "GETTING OUT";
+        await this.moveTo(elevatorPosition + 100);
+        this.addEntityToFloor();
+        this.state = "OUTSIDE"
+        this.travelComplete = true;
+        thisElevator.isBusy = false;
+    }
   }
   // poate adaugi si !isElevatorMoving pt astea ca sa eviti orice zambra
   getInDecider(){
     // Make sure you get in only if: elevator is present, doors are open and entity is waiting
     if (this.isElevatorHere() && this.state == "WAITING" && thisElevator.areDoorsOpen){
         this.state = "READY TO GET IN";
-        console.log("Going in!")
+        console.debug("Going in!")
     }
 
   }
 
   getOutDecider(){
     // Make sure the elevator is stopped at the destination, the entity is at the desired floor and of course the doors are open
-      if (thisElevator.isAtDestination && this.state == "AT DESTINATION" && thisElevator.areDoorsOpen){
+      if (!thisElevator.isMoving && this.state == "AT DESTINATION" && thisElevator.areDoorsOpen){
           this.state = "READY TO GET OUT";
-          console.log("Going out!")
+          console.debug("Going out!")
       }
 
     }
@@ -114,6 +128,7 @@ class Entity {
 //    }
     this.getInDecider();
     this.getOutDecider();
+
     // in state watcher adaugi toate eventurile care trebuie sa aiba loc in functie de starea entitatii
     this.stateWatcher();
     this.updateCurrentFloor();
@@ -196,14 +211,14 @@ class Entity {
     // fara async aici poate? setezi starea pe waiting si apoi sa ai ceva intr-un watcher... if waiting si elevatorHere -> state = getIn si urci
     callElevator(){
         //console.log(this.htmlId)
-        createExternalRequest(this.currentFloor, "DOWN");
+        createExternalRequest(this.currentFloor, "DOWN", this.htmlId);
         this.state = "WAITING";
     }
 
 
     makeElevatorRequest(){
-        createInternalRequest(this.desiredFloor);
-        this.state = "REQUEST TAKEN"
+        createInternalRequest(this.desiredFloor, this.htmlId);
+        //this.state = "REQUEST TAKEN"
     }
 
     displayPosition(){
@@ -216,27 +231,9 @@ class Entity {
     }
 
 
-    static getEntitiesForFloor(floorNumber){
-        var returnEntities = []
-        for (var ent of entities){
-            if (ent.currentFloor == floorNumber){
-                returnEntities.push(ent)
-            }
 
-        }
-        return returnEntities;
-    }
 
-    static getEntityById(id){
-            var returnEntity = null;
-            for (var ent of entities){
-                if (ent.htmlId == id){
-                    returnEntity = ent;
-                }
 
-            }
-            return returnEntity;
-    }
 
     drawEntity(floorId){
         const objectVisual = document.createElement('div');
@@ -257,19 +254,19 @@ class Entity {
       }
 
       async stateWatcher(){
-
+        if (this.state == "READY TO GET IN"){
+            await this.getInside();
+        }
+        if (this.state == "READY TO GET OUT"){
+            await this.getOutside();
+        }
         if (this.state != this.oldState) {
             const objectVisual = document.getElementById(this.htmlId);
             objectVisual.innerHTML = this.state + " " + this.callTaken ;
 //            console.log("State change for entityID: " + this.htmlId);
 //            console.log("State change from: " + this.oldState  + " to: " + this.state);
             this.oldState = this.state;
-            if (this.state == "READY TO GET IN"){
-                await this.getInside();
-            }
-            if (this.state == "READY TO GET OUT"){
-                await this.getOutside();
-            }
+
 //            if (this.state == "INSIDE"){
 //                this.addEntityToElevator();
 //            }
@@ -278,8 +275,73 @@ class Entity {
 //            }
         }
 
-      }
+    }
 
+
+    // SPECIFIC ENTITY GETTERS
+    static setArrivalStatusForEntities(floor){
+        var returnEntities = []
+
+        for (var entity of Entity.entityList){
+            if (entity.currentFloor == floor && entity.desiredFloor == entity.currentFloor){
+                entity.state = "AT DESTINATION";
+            }
+        }
+        return returnEntities;
+    }
+    static getEntitiesByFloorAndState(floor, state){
+        var returnEntities = []
+        for (var entity of Entity.entityList){
+            if (entity.currentFloor == floor && entity.state == state){
+                returnEntities.push(entity);
+            }
+        }
+        return returnEntities;
+
+    }
+
+    static getEntitiesInside(){
+            var returnEntities = []
+            for (var entity of Entity.entityList){
+                if (entity.state == "INSIDE"){
+                    returnEntities.push(entity);
+                }
+            }
+            return returnEntities;
+
+    }
+    static getEntitiesAtDestination(){
+            var returnEntities = []
+            for (var entity of Entity.entityList){
+                if (entity.state == "AT DESTINATION"){
+                    returnEntities.push(entity);
+                }
+            }
+            return returnEntities;
+
+    }
+
+    static getEntityById(id){
+        var returnEntity = null;
+        for (var ent of entities){
+            if (ent.htmlId == id){
+                returnEntity = ent;
+            }
+
+        }
+        return returnEntity;
+    }
+
+
+    static removeEntity(entity){
+
+        var index = Entity.entityList.indexOf(entity);
+        if (index != -1){
+            Entity.entityList.splice(index, 1);
+        }
+
+
+    }
 }
 
 

@@ -4,7 +4,9 @@ class SizeCalculator {
   //Empty constructor
   }
   // TODO: Elevator is not repositioned on the currentFloor at screen resizing!
-  // TODO: Entity resizing to be implemented!
+  // TODO: Entity resizing to be implemented! - entities are already correct size at spawn - if resize only at start no need for other implementations
+  // TODO: Resize only if elevator is not moving + un watcher la fiecare x secunde care sa resize? (poate)
+  // RESIZE ONLY AT START ?
   getWindowDimensions(){
   	const aspectRatio = 16 / 9;
 
@@ -53,6 +55,13 @@ class SizeCalculator {
     var elevatorHeightPx = this.calculateElevatorSize()[1] + "px"
   	elevator.style.width = elevatorWidthPx
   	elevator.style.height = elevatorHeightPx
+
+  }
+
+  repositionElevator(){
+    var elevator = document.getElementById("elevator");
+    var currFloorHeight = thisElevator.currentFloor * this.calculateFloorHeight();
+    elevator.style.bottom = currFloorHeight + "px";
 
   }
 
