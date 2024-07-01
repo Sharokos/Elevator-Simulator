@@ -16,6 +16,7 @@ class Elevator {
 
 
 	//TODO: Sometimes the elevator remains busy (with an entity blocked inside) and there is no way of removing that state
+    // TODO: Elevator capacity so no one can get in once it is full
     async openDoors(){
         return new Promise(async (resolve, reject) => {
             console.debug("Doors are opening")

@@ -114,6 +114,23 @@ class SizeCalculator {
       var left = this.getWidth()*object.drawing.left;
       return left;
   }
+  calculateDrawingSize(scale,ratio, orientation){
+      var width = 0;
+      var height = 0;
+      if (orientation == "landscape"){
+          width = this.getWidth()/scale;
+          height = width/ratio;
+      }
+      else if (orientation == "portrait"){
+          height = this.getHeight()/scale;
+          width = height * ratio;
+      }
+
+      return [width, height];
+    }
+  calculateDrawingPosition(left){
+        return this.getWidth()*left;
+    }
 
   resizeObject(visualId, object){
     var visualObject = document.getElementById(visualId)

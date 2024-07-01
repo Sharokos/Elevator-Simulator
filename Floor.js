@@ -18,9 +18,13 @@ class Floor {
         var drawing = new DrawingProperties(3, 1.5, "floor", "path", 0, "portrait");
         var objects = [];
         var numberOfObjects = rand.getRandomInt(1,20);
+        ForbiddenSpawnZone.createZone(elevatorSpawnPosition,elevatorSpawnPosition + elevatorBtnsPosition + 30,i)
         for (let j=0; j<numberOfObjects; j++){
+                var obj = Object.generateObject(rand,i);
 
-                objects.push(Object.generateObject(rand,i));
+                if (obj != null){
+                    objects.push(obj);
+                }
         }
         floors.push(new Floor(i,0,drawing, objects));
       }

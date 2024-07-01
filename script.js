@@ -4,15 +4,38 @@ const rand = new Randomness();
 const history = [];
 var numberOfFloors = rand.getRandomInt(4, 8);
 const thisElevator = new Elevator(numberOfFloors,0,false,true,"UP", 0);
+
+const elevatorSpawnPosition = 200;
+const elevatorBtnsPosition = (sizer.getWidth()/80)*6;
+const absoluteBtnsPosition = elevatorBtnsPosition + elevatorSpawnPosition;
 const floors = Floor.generateFloors(numberOfFloors);
-
-// TODO: add elevator buttons for calling outside
-
-// TODO: exact positioning for entering/exiting elevator - no more hardcode
 // TODO: randomize position inside elevator
-// TODO: start looking into objects (how to correctly generate them with no overlapping) - vezi initialize scene
+// TODO: start looking into generating correct objects (lamps/mugs/small plants on top of desks) - static entities? (receptioneri care sa faca zambre)
 // TODO: start looking into how to draw the actual 8bit art (random ideas: emergency exit signs would be cool... display deasupra liftului care arata la ce etaj e si ce directie are liftul)
+// TODO: Un div prezent mereu peste lift dar invizibil si devine vizibil doar cand se inchid/deschid usile. Cand sunt inchise e imagine, in rest e gif, iar cand sunt deschise e invizibil
+// TODO: Un div prezent la fiecare etaj pe full height si pe latimea liftului (z-index sub lift, dar peste perete) - casa liftului
+// TODO: O clasa separata care sa tina toate variabilele globale? poate! (customizata pt fiecare theme)
+// TODO: O clasa NoNonsense rules careia sa ii feed in un obiect si sa verifice daca e ok in contextul etajului sau ba.
 
+
+
+
+window.addEventListener('keydown', (event) => {
+      switch (event.key) {
+          case 'ArrowUp':
+
+              break;
+          case 'ArrowDown':
+
+              break;
+          case 'ArrowLeft':
+              player.moveLeft();
+              break;
+          case 'ArrowRight':
+              player.moveRight();
+              break;
+      }
+  });
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -41,6 +64,9 @@ function displayEntities(){
         ent.displayPosition();
     }
 }
+
+
+
 
 
 
@@ -81,10 +107,10 @@ function resizeScene() {
 
 window.addEventListener('resize', resizeScene);
 
-initializer.init(floors); // Initial call
+initializer.init(floors, elevatorSpawnPosition); // Initial call
 scrollToBottom('scene');
 const elevator = document.getElementById('elevator');
-
+const player = Player.spawnPlayer(1);
 
 async function startElevator(){
 

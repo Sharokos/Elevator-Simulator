@@ -4,7 +4,7 @@ class Scenarios {
     this.watcherInterval= setInterval(this.watcher.bind(this), 100); // Setting up the interval
   }
 
-
+// fun: sa se deschida random portal rick si morty si sa dispara oameni!
   watcher(){
     this.makeCall();
     this.leaveScene();
@@ -25,7 +25,7 @@ class Scenarios {
     }
   }
   async moveToElevator(){
-      var destination = parseInt(elevator.style.left) + 100;
+      var destination = elevatorSpawnPosition + elevatorBtnsPosition;
       await this.entity.moveTo(destination);
       await this.entity.callElevator();
 

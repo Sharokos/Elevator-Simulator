@@ -68,7 +68,7 @@ class Entity {
   addEntityToElevator(){
     const entityVisual = document.getElementById(this.htmlId);
     elevator.appendChild(entityVisual);
-    entityVisual.style.left = parseInt(entityVisual.style.left) - 100 + "px";
+    entityVisual.style.left = "0px";
 
 
   }
@@ -77,15 +77,15 @@ class Entity {
     const entityVisual = document.getElementById(this.htmlId);
     const floor = document.getElementById("floor" + this.desiredFloor);
     floor.appendChild(entityVisual)
-    entityVisual.style.left = parseInt(entityVisual.style.left) + 100 + "px";
+    entityVisual.style.left = elevatorSpawnPosition + elevatorBtnsPosition + "px";
   }
 
   async getInside(){
-    var elevatorPosition = parseInt(elevator.style.left); // poate o poti face cumva o proprietate a liftului updatata constant din sizer?
+    //var elevatorPosition = parseInt(elevator.style.left); // poate o poti face cumva o proprietate a liftului updatata constant din sizer?
 
     if (!thisElevator.doorsAreMoving){
         this.state = "GETTING IN";
-        await this.moveTo(elevatorPosition);
+        await this.moveTo(elevatorSpawnPosition); // + a random number that is within the bounds of the elevator
         this.addEntityToElevator();
         this.state = "INSIDE"
         thisElevator.isBusy = false;
@@ -93,10 +93,10 @@ class Entity {
 
   }
   async getOutside(){
-    var elevatorPosition = parseInt(elevator.style.left); // poate o poti face cumva o proprietate a liftului updatata constant din sizer?
+    //var elevatorPosition = parseInt(elevator.style.left); // poate o poti face cumva o proprietate a liftului updatata constant din sizer?
     if (!thisElevator.doorsAreMoving){
         this.state = "GETTING OUT";
-        await this.moveTo(elevatorPosition + 100);
+        await this.moveTo(elevatorBtnsPosition);
         this.addEntityToFloor();
         this.state = "OUTSIDE"
         this.travelComplete = true;

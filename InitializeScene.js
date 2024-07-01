@@ -33,7 +33,7 @@ class InitializeScene {
     frame.style.height = this.sizer.getPxHeight();
   }
 
-  createFloors(floors){
+  createFloors(floors, elevatorPosition){
     const frame = document.getElementById('scene')
     var numberOfFloors = floors.length;
     var floorHeight = sizer.calculateFloorHeight();
@@ -58,7 +58,8 @@ class InitializeScene {
 
       floors[i].bottomLevel = bottomLevel;
       floorContainer.appendChild(floor);
-      //this.createObjects(floors[i].objects, floor);
+      this.createElevatorButtons(elevatorPosition, i, floor)
+      this.createObjects(floors[i].objects, floor);
 
 
     }
@@ -67,7 +68,7 @@ class InitializeScene {
   }
 
 
-  createElevator(){
+  createElevator(elevatorPosition){
     var elev = document.createElement('div')
     const scene = document.getElementById('floorContainer')
     elev.setAttribute('class', 'elevator');
@@ -79,18 +80,38 @@ class InitializeScene {
     var elevatorHeight = elevatorWidth * ratio
     var elevatorWidthPx = elevatorWidth + "px"
     var elevatorHeightPx = elevatorHeight + "px"
+    var elevatorLeft = elevatorPosition;
     elev.style.width = elevatorWidthPx
     elev.style.height = elevatorHeightPx
     elev.style.bottom = "0px"
-    elev.style.left = "100px"
+    elev.style.left = elevatorLeft + "px"
+
     scene.appendChild(elev)
+  }
+  createElevatorButtons(elevatorPosition, floorCount, floor){
+     var elevBtns = document.createElement('div')
+     elevBtns.setAttribute('class', 'elevatorBtns');
+     elevBtns.setAttribute('id', 'elevatorBtns' + floorCount);
+     var width = this.sizer.getWidth();
+     var height = this.sizer.getHeight();
+     var elevatorBtnWidth = width / 80;
+     var ratio = 1.5;
+     var elevatorBtnHeight = elevatorBtnWidth * ratio;
+     elevBtns.style.width = elevatorBtnWidth + "px";
+     elevBtns.style.height = elevatorBtnHeight + "px";
+     elevBtns.style.bottom = 1.5*elevatorBtnHeight + "px";
+     elevBtns.style.left = elevatorPosition + 6*elevatorBtnWidth + "px";
+     floor.appendChild(elevBtns);
   }
 
 
-  init(floors){
+
+
+  init(floors, elevatorPosition){
     this.createFrame();
-    this.createFloors(floors);
-    this.createElevator()
+    this.createFloors(floors, elevatorPosition);
+    this.createElevator(elevatorPosition);
+
   }
 
 

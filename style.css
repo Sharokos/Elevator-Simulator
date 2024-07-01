@@ -18,8 +18,19 @@
 
 }
 
+.player{
+    position:absolute;
+    fill: red;
+    border: solid 1px;
+
+}
+
 .entityVisual{
- position:absolute;
+    position:absolute;
+    border: solid 1px;
+}
+.elevatorBtns{
+    position:absolute;
     border: solid 1px;
 }
 
